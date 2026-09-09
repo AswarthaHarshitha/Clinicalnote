@@ -1,0 +1,351 @@
+// ClinicalNote — Prisma schema
+// Every clinical record is scoped to an Organization (multi-tenant). Backend
+// authorization always resolves access as user -> membership -> organization
+// -> resource; organization/tenant IDs are never trusted directly from the client.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Enums ----------
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  CLINICIAN
+  STAFF
+}
+
+enum EncounterType {
+  INITIAL_CONSULTATION
+  FOLLOW_UP
+  TELEHEALTH
+  PREVENTIVE_VISIT
+  CHRONIC_CARE
+  URGENT
+  OTHER
+}
+
+enum AudioSourceType {
+  RECORDED
+  UPLOADED
+}
+
+enum TranscriptionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum NoteStatus {
+  DRAFT
+  TRANSCRIBED
+  AI_GENERATED
+  IN_REVIEW
+  FINALIZED
+  ARCHIVED
+}
+
+enum SoapSectionType {
+  SUBJECTIVE
+  OBJECTIVE
+  ASSESSMENT
+  PLAN
+}
+
+enum ConfidenceLevel {
+  HIGH
+  REVIEW_RECOMMENDED
+  MISSING_INFORMATION
+}
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  LOGIN_FAILED
+  PATIENT_CREATED
+  PATIENT_UPDATED
+  ENCOUNTER_CREATED
+  NOTE_CREATED
+  NOTE_EDITED
+  NOTE_SECTION_REGENERATED
+  NOTE_FINALIZED
+  NOTE_ARCHIVED
+  TRANSCRIPT_GENERATED
+  TRANSCRIPT_EDITED
+  SOAP_GENERATED
+  EXPORT_PERFORMED
+  SETTINGS_CHANGED
+  TEMPLATE_CREATED
+  TEMPLATE_UPDATED
+  TEMPLATE_DELETED
+}
+
+// ---------- Core tenancy & identity ----------
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Clinical settings (org-level policy)
+  requirePatientName Boolean @default(true)
+  requireDob         Boolean @default(false)
+  defaultLanguage    String  @default("en")
+  dateFormat         String  @default("MM/DD/YYYY")
+  storeAudio         Boolean @default(false)
+
+  memberships Membership[]
+  patients    Patient[]
+  encounters  Encounter[]
+  notes       ClinicalNote[]
+  templates   Template[]
+  auditLogs   AuditLog[]
+
+  @@map("organizations")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  fullName     String
+  role         String // professional role/title, e.g. "Physician", "Nurse Practitioner"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships Membership[]
+  sessions    Session[]
+  auditLogs   AuditLog[]
+  encountersAsClinician Encounter[] @relation("EncounterClinician")
+  notesAsClinician      ClinicalNote[] @relation("NoteClinician")
+  noteVersions          ClinicalNoteVersion[]
+
+  @@map("users")
+}
+
+model Membership {
+  id             String         @id @default(uuid())
+  userId         String
+  organizationId String
+  role           MembershipRole @default(CLINICIAN)
+  createdAt      DateTime       @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@map("memberships")
+}
+
+model Session {
+  id             String   @id @default(uuid())
+  userId         String
+  tokenHash      String   @unique
+  organizationId String? // active organization for this session
+  userAgent      String?
+  ipAddress      String?
+  createdAt      DateTime @default(now())
+  expiresAt      DateTime
+  revokedAt      DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// ---------- Patients & encounters ----------
+
+model Patient {
+  id             String   @id @default(uuid())
+  organizationId String
+  identifier     String // MRN or org-defined patient identifier
+  fullName       String?
+  dateOfBirth    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  encounters   Encounter[]
+  notes        ClinicalNote[]
+
+  @@unique([organizationId, identifier])
+  @@index([organizationId, fullName])
+  @@map("patients")
+}
+
+model Encounter {
+  id             String        @id @default(uuid())
+  organizationId String
+  patientId      String
+  clinicianId    String
+  encounterType  EncounterType @default(INITIAL_CONSULTATION)
+  visitDate      DateTime
+  chiefComplaint String?
+  location       String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  patient         Patient          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  clinician       User             @relation("EncounterClinician", fields: [clinicianId], references: [id])
+  audioRecordings AudioRecording[]
+  notes           ClinicalNote[]
+
+  @@index([organizationId, visitDate])
+  @@map("encounters")
+}
+
+// ---------- Audio & transcription ----------
+
+model AudioRecording {
+  id            String          @id @default(uuid())
+  encounterId   String
+  sourceType    AudioSourceType
+  storageKey    String? // null when STORE_AUDIO=false and audio is discarded post-transcription
+  mimeType      String
+  fileSizeBytes Int
+  durationSec   Float?
+  createdAt     DateTime        @default(now())
+
+  encounter   Encounter    @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  transcript  Transcript?
+
+  @@index([encounterId])
+  @@map("audio_recordings")
+}
+
+model Transcript {
+  id               String              @id @default(uuid())
+  audioRecordingId String              @unique
+  text             String
+  language         String?
+  durationSec      Float?
+  provider         String
+  confidence       Float?
+  status           TranscriptionStatus @default(PENDING)
+  errorMessage     String?
+  editedByUser     Boolean             @default(false)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  audioRecording AudioRecording @relation(fields: [audioRecordingId], references: [id], onDelete: Cascade)
+  notes          ClinicalNote[]
+
+  @@map("transcripts")
+}
+
+// ---------- Clinical notes ----------
+
+model ClinicalNote {
+  id             String     @id @default(uuid())
+  organizationId String
+  patientId      String
+  encounterId    String
+  clinicianId    String
+  transcriptId   String?
+  templateId     String?
+  status         NoteStatus @default(DRAFT)
+  noteType       String     @default("General Consultation")
+  currentVersion Int        @default(1)
+  finalizedAt    DateTime?
+  archivedAt     DateTime?
+  lastSavedAt    DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  organization Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  patient      Patient                @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  encounter    Encounter              @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  clinician    User                   @relation("NoteClinician", fields: [clinicianId], references: [id])
+  transcript   Transcript?            @relation(fields: [transcriptId], references: [id])
+  template     Template?              @relation(fields: [templateId], references: [id])
+  sections     SoapSection[]
+  versions     ClinicalNoteVersion[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, updatedAt])
+  @@map("clinical_notes")
+}
+
+model SoapSection {
+  id            String          @id @default(uuid())
+  noteId        String
+  type          SoapSectionType
+  content       Json // structured content for the section (see shared schema)
+  sourceRefs    Json? // transcript span references used for traceability, if established
+  confidence    ConfidenceLevel @default(MISSING_INFORMATION)
+  flags         Json? // deterministic safety-check flags (contradictions, unsupported claims, etc.)
+  isEdited      Boolean         @default(false)
+  generatedAt   DateTime?
+  updatedAt     DateTime        @updatedAt
+
+  note ClinicalNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@unique([noteId, type])
+  @@map("soap_sections")
+}
+
+model ClinicalNoteVersion {
+  id            String   @id @default(uuid())
+  noteId        String
+  versionNumber Int
+  authorId      String?
+  changeSummary String
+  snapshot      Json // full SOAP + status snapshot at this version
+  createdAt     DateTime @default(now())
+
+  note   ClinicalNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  author User?        @relation(fields: [authorId], references: [id])
+
+  @@unique([noteId, versionNumber])
+  @@map("clinical_note_versions")
+}
+
+// ---------- Templates ----------
+
+model Template {
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  category       String
+  description    String?
+  isDefault      Boolean  @default(false)
+  structure      Json // default section prompts/placeholders (never patient data)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  notes        ClinicalNote[]
+
+  @@index([organizationId])
+  @@map("templates")
+}
+
+// ---------- Audit ----------
+
+model AuditLog {
+  id             String      @id @default(uuid())
+  organizationId String?
+  actorId        String?
+  action         AuditAction
+  resourceType   String
+  resourceId     String?
+  metadata       Json?
+  createdAt      DateTime    @default(now())
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor        User?         @relation(fields: [actorId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@map("audit_logs")
+}

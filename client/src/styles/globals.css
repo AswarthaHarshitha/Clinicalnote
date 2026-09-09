@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 48 24% 96%;
+  --surface: 0 0% 100%;
+  --foreground: 160 13% 14%;
+  --primary: 165 33% 21%;
+  --primary-foreground: 48 24% 98%;
+  --secondary: 158 10% 42%;
+  --secondary-foreground: 48 24% 98%;
+  --accent: 148 11% 68%;
+  --accent-foreground: 160 13% 14%;
+  --muted: 153 4% 47%;
+  --muted-foreground: 153 4% 47%;
+  --border: 120 6% 87%;
+  --warning: 29 49% 48%;
+  --danger: 0 38% 47%;
+  --success: 150 23% 36%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: "Inter", "IBM Plex Sans", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+}
