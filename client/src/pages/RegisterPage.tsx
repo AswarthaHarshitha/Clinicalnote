@@ -62,7 +62,7 @@ export function RegisterPage() {
             <Stethoscope className="h-5.5 w-5.5" />
           </div>
           <h1 className="text-lg font-semibold text-foreground">Create your clinical workspace</h1>
-          <p className="text-sm text-muted">Set up a new organization on Clinote</p>
+          <p className="text-sm text-muted">Set up a new organization on ClinicalNote</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="rounded-lg border border-border bg-surface p-6 shadow-card">

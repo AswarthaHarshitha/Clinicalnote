@@ -55,7 +55,7 @@ export function LoginPage() {
           <div className="flex h-11 w-11 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <Stethoscope className="h-5.5 w-5.5" />
           </div>
-          <h1 className="text-lg font-semibold text-foreground">Clinote</h1>
+          <h1 className="text-lg font-semibold text-foreground">ClinicalNote</h1>
           <p className="text-sm text-muted">Sign in to your clinical workspace</p>
         </div>
 

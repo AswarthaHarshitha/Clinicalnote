@@ -57,7 +57,7 @@ export function AppShell() {
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <Stethoscope className="h-4.5 w-4.5" />
           </div>
-          <span className="text-sm font-semibold tracking-tight text-foreground">Clinote</span>
+          <span className="text-sm font-semibold tracking-tight text-foreground">ClinicalNote</span>
           <button className="ml-auto text-muted md:hidden" onClick={() => setMobileOpen(false)} aria-label="Close menu">
             <X className="h-4 w-4" />
           </button>
@@ -108,7 +108,7 @@ export function AppShell() {
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-1.5 text-sm text-muted">
-            <span>Clinote</span>
+            <span>ClinicalNote</span>
             <ChevronRight className="h-3.5 w-3.5" />
             <span className="font-medium text-foreground">{crumbFor(location.pathname)}</span>
           </div>

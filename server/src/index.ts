@@ -54,7 +54,7 @@ app.use(errorHandler);
 
 if (env.nodeEnv !== "test") {
   app.listen(env.port, () => {
-    console.log(`Clinote API listening on port ${env.port}`);
+    console.log(`ClinicalNote API listening on port ${env.port}`);
   });
 }
 

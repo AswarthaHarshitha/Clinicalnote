@@ -1,5 +1,5 @@
 {
-  "name": "clinote-server",
+  "name": "clinicalnote-server",
   "version": "1.0.0",
   "private": true,
   "type": "commonjs",
