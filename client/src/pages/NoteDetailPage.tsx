@@ -301,7 +301,7 @@ export function NoteDetailPage() {
             ))}
 
             <p className="mt-6 rounded-md border border-border bg-background p-3 text-xs text-muted print:border-0 print:bg-transparent">
-              ClinicalNote assists with documentation. It does not replace professional clinical judgment. Clinicians must review all generated content
+              Clinote assists with documentation. It does not replace professional clinical judgment. Clinicians must review all generated content
               before it becomes part of the medical record.
             </p>
           </div>

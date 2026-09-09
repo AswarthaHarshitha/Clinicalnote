@@ -51,7 +51,7 @@ export function renderNoteToPlainText(data: ExportNoteData): string {
     lines.push("");
   }
   lines.push(
-    "ClinicalNote assists with documentation. It does not replace professional clinical judgment. Clinicians must review all generated content before it becomes part of the medical record."
+    "Clinote assists with documentation. It does not replace professional clinical judgment. Clinicians must review all generated content before it becomes part of the medical record."
   );
   return lines.join("\n");
 }
@@ -92,7 +92,7 @@ export function renderNoteToPdf(data: ExportNoteData): PassThrough {
     .fontSize(8)
     .fillColor("#737C78")
     .text(
-      "ClinicalNote assists with documentation. It does not replace professional clinical judgment. Clinicians must review all generated content before it becomes part of the medical record.",
+      "Clinote assists with documentation. It does not replace professional clinical judgment. Clinicians must review all generated content before it becomes part of the medical record.",
       { align: "left" }
     );
 

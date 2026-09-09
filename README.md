@@ -1,4 +1,4 @@
-# ClinicalNote
+# Clinote
 
 A voice-to-clinical-note documentation tool for healthcare professionals. A clinician records or uploads a visit, the audio is transcribed by a real
 speech-to-text provider, the clinician reviews the transcript, and a real LLM structures it into an editable SOAP note (Subjective / Objective /
@@ -7,7 +7,7 @@ Assessment / Plan) — which the clinician edits, versions, and finalizes.
 There is no seeded data, no mock providers, and no fabricated AI output anywhere in this codebase. If a provider isn't configured, the app says so —
 it never invents a transcript or a SOAP note.
 
-> **Disclaimer.** ClinicalNote assists with documentation. It does not replace professional clinical judgment. Clinicians must review all
+> **Disclaimer.** Clinote assists with documentation. It does not replace professional clinical judgment. Clinicians must review all
 > AI-generated content before it becomes part of the medical record. This project is designed with healthcare privacy and security
 > considerations in mind, but no compliance claim (HIPAA, GDPR, etc.) is made — that depends on your full deployment and legal review.
 
