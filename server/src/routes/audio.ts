@@ -24,12 +24,16 @@ export const SUPPORTED_AUDIO_MIME_TYPES = [
   "audio/ogg",
 ];
 
-fs.mkdirSync(env.storageDir, { recursive: true });
-fs.mkdirSync(path.join(env.storageDir, "..", "tmp"), { recursive: true });
+const tmpUploadDir = path.join(env.storageDir, "..", "tmp");
 
 const upload = multer({
   storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, path.join(env.storageDir, "..", "tmp")),
+    // Created lazily (and idempotently) on first upload rather than at
+    // module load — a filesystem issue here should surface as a normal
+    // request error, not crash the whole process before it can start.
+    destination: (_req, _file, cb) => {
+      fs.mkdir(tmpUploadDir, { recursive: true }, (err) => cb(err, tmpUploadDir));
+    },
     filename: (_req, file, cb) => cb(null, `${uuid()}${path.extname(file.originalname) || ""}`),
   }),
   limits: { fileSize: env.maxAudioUploadMb * 1024 * 1024 },

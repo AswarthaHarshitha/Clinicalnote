@@ -1,4 +1,6 @@
 import "dotenv/config";
+import path from "node:path";
+import os from "node:os";
 
 function required(name: string, value: string | undefined): string {
   if (!value || value.trim() === "") {
@@ -52,5 +54,11 @@ export const env = {
 
   storeAudio: process.env.STORE_AUDIO === "true",
   maxAudioUploadMb: Number(process.env.MAX_AUDIO_UPLOAD_MB ?? 25),
-  storageDir: process.env.STORAGE_DIR ?? "./storage/audio",
+  // Serverless platforms (Vercel included) only allow writes under the OS
+  // temp dir — everywhere else the app is deployed, that's the same as the
+  // configured/default relative path. Resolved to an absolute path so it
+  // doesn't depend on the process's current working directory.
+  storageDir: process.env.VERCEL
+    ? path.join(os.tmpdir(), "clinicalnote-audio")
+    : path.resolve(process.env.STORAGE_DIR ?? "./storage/audio"),
 };

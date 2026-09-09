@@ -59,6 +59,7 @@ transcriptionsRouter.post(
       // Honor data-minimization: discard the raw audio unless the org has
       // explicitly opted into retention.
       if (env.storeAudio) {
+        fs.mkdirSync(env.storageDir, { recursive: true });
         const permanentPath = path.join(env.storageDir, path.basename(recording.storageKey));
         fs.renameSync(recording.storageKey, permanentPath);
         await prisma.audioRecording.update({ where: { id: recording.id }, data: { storageKey: permanentPath, durationSec: result.durationSec } });
