@@ -24,7 +24,16 @@ templatesRouter.post(
     if (data.isDefault) {
       await prisma.template.updateMany({ where: { organizationId: req.organizationId! }, data: { isDefault: false } });
     }
-    const template = await prisma.template.create({ data: { ...data, organizationId: req.organizationId! } });
+    const template = await prisma.template.create({
+      data: {
+        name: data.name,
+        category: data.category,
+        description: data.description ?? null,
+        isDefault: data.isDefault ?? false,
+        structure: data.structure,
+        organizationId: req.organizationId!,
+      },
+    });
     await recordAudit({ organizationId: req.organizationId, actorId: req.user?.id, action: "TEMPLATE_CREATED", resourceType: "template", resourceId: template.id });
     res.status(201).json({ success: true, data: template });
   })
@@ -39,7 +48,16 @@ templatesRouter.patch(
     if (data.isDefault) {
       await prisma.template.updateMany({ where: { organizationId: req.organizationId! }, data: { isDefault: false } });
     }
-    const template = await prisma.template.update({ where: { id: existing.id }, data });
+    const template = await prisma.template.update({
+      where: { id: existing.id },
+      data: {
+        ...(data.name !== undefined ? { name: data.name } : {}),
+        ...(data.category !== undefined ? { category: data.category } : {}),
+        ...(data.description !== undefined ? { description: data.description } : {}),
+        ...(data.isDefault !== undefined ? { isDefault: data.isDefault } : {}),
+        ...(data.structure !== undefined ? { structure: data.structure } : {}),
+      },
+    });
     await recordAudit({ organizationId: req.organizationId, actorId: req.user?.id, action: "TEMPLATE_UPDATED", resourceType: "template", resourceId: template.id });
     res.json({ success: true, data: template });
   })

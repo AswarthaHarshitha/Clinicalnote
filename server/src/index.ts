@@ -52,7 +52,9 @@ app.use("/api/settings", settingsRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-if (env.nodeEnv !== "test") {
+// Vercel imports this module and calls `app` as a request handler directly
+// (see /api/index.ts) — it must never bind a port itself there.
+if (env.nodeEnv !== "test" && !process.env.VERCEL) {
   app.listen(env.port, () => {
     console.log(`ClinicalNote API listening on port ${env.port}`);
   });

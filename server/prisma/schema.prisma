@@ -4,12 +4,20 @@
 // -> resource; organization/tenant IDs are never trusted directly from the client.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // "native" for local dev; "rhel-openssl-3.0.x" is required for Vercel's
+  // serverless Node runtime (Amazon Linux). Both are generated, at some
+  // build-time cost, so the same schema works locally and deployed.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Used only for migrations. In serverless, DATABASE_URL should point at a
+  // pooled (pgbouncer) connection while directUrl points at the direct one —
+  // see .env.example. Locally these can be the same value.
+  directUrl = env("DIRECT_URL")
 }
 
 // ---------- Enums ----------

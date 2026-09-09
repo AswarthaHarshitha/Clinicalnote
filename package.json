@@ -1,0 +1,6 @@
+{
+  "name": "clinicalnote",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Voice-to-clinical-note SOAP documentation app — see README.md. This root package.json exists only so Vercel has something to detect; client/ and server/ are independent packages, installed separately per vercel.json's installCommand."
+}
