@@ -11,6 +11,9 @@ it never invents a transcript or a SOAP note.
 > AI-generated content before it becomes part of the medical record. This project is designed with healthcare privacy and security
 > considerations in mind, but no compliance claim (HIPAA, GDPR, etc.) is made — that depends on your full deployment and legal review.
 
+🌐 **Live Application:** https://clinicalnote-nu.vercel.app/
+
+
 ## Architecture
 
 ```
@@ -37,9 +40,8 @@ interface ClinicalNoteProvider  { generateSoapNote(...), regenerateSection(...) 
 | Speech-to-text | **Groq** (`whisper-large-v3-turbo`, free tier) | OpenAI Whisper | `TRANSCRIPTION_PROVIDER=groq\|openai` |
 | SOAP structuring | **Gemini** (free tier) | Groq (Llama 3.3, free tier) · OpenAI | `LLM_PROVIDER=gemini\|groq\|openai` |
 
-Nothing is hardcoded to a paid vendor — the app runs on ₹0 mandatory API spend using Groq + Gemini free tiers. `AI_MODE=local` is reserved for a
-future self-hosted Whisper/Ollama runtime; until that's implemented, selecting it makes every AI feature report a clear "not configured" state
-rather than faking a response.
+
+The default development configuration can operate without mandatory paid API usage when eligible free tiers are available. Provider integrations remain swappable through environment configuration.
 
 ## Clinical safety design
 
