@@ -19,7 +19,7 @@ it never invents a transcript or a SOAP note.
 ```
 client/   React + TypeScript + Vite + Tailwind — the clinical workspace
 server/   Node + TypeScript + Express + Prisma — API, auth, providers
-shared/   (reserved for cross-package types as the app grows)
+api/      Vercel serverless entry that mounts the Express app
 ```
 
 **Auth** — email/password, Argon2id hashing, opaque session tokens (hashed, stored in Postgres) set as an httpOnly cookie. No JWTs to manage,
